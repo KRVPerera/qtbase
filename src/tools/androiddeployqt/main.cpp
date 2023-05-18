@@ -8,15 +8,12 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonValue>
-#include <QDebug>
-#include <QDataStream>
 #include <QXmlStreamReader>
-#include <QStandardPaths>
-#include <QUuid>
 #include <QDirIterator>
 #include <QElapsedTimer>
 #include <QRegularExpression>
 #include <QSettings>
+#include <QString>
 #include <QHash>
 #include <QSet>
 #include <QMap>
@@ -125,6 +122,7 @@ struct Options
     bool auxMode;
     bool noRccBundleCleanup = false;
     bool copyDependenciesOnly = false;
+    bool cutter = false;
     QElapsedTimer timer;
 
     // External tools
@@ -252,6 +250,8 @@ bool checkCanImportFromRootPaths(const Options *options, const QString &absolute
                                  const QString &moduleUrl);
 bool readDependenciesFromElf(Options *options, const QString &fileName,
                              QSet<QString> *usedDependencies, QSet<QString> *remainingDependencies);
+
+bool writeStringXMLToFile(const QString &destination);
 
 QString architectureFromName(const QString &name)
 {
@@ -527,6 +527,8 @@ Options parseOptions()
             options.protectedAuthenticationPath = true;
         } else if (argument.compare("--aux-mode"_L1, Qt::CaseInsensitive) == 0) {
             options.auxMode = true;
+        } else if (argument.compare("--cutter"_L1, Qt::CaseInsensitive) == 0) {
+            options.cutter = true;
         } else if (argument.compare("--qml-importscanner-binary"_L1, Qt::CaseInsensitive) == 0) {
             options.qmlImportScannerBinaryPath = arguments.at(++i).trimmed();
         } else if (argument.compare("--no-rcc-bundle-cleanup"_L1,
@@ -1394,6 +1396,72 @@ bool copyAndroidSources(const Options &options)
     }
 
     return copyFiles(sourceDirectory, QDir(options.outputDirectory), options, true);
+}
+
+bool createCutterStringValue(const Options &options) {
+    if (options.verbose)
+        fprintf(stdout, "Creating Cutter string resource.\n");
+
+    QString resValuesDirectoryName = "%1/res/values"_L1.arg(options.outputDirectory);
+    QDir resValuesDirectory = QDir(resValuesDirectoryName);
+    if (!resValuesDirectory.exists()) {
+        fprintf(stderr, "Cannot find android output dir in %s", qPrintable(resValuesDirectoryName));
+        return false;
+    }
+    QString stringFileName = QStringLiteral("strings.xml");
+    QString stringFileDestination = resValuesDirectory.absoluteFilePath(stringFileName);
+    if (!QFileInfo::exists(stringFileDestination)) {
+        return writeStringXMLToFile(stringFileDestination);
+    }
+
+    QString cutterFileName = QStringLiteral("cutter.xml");
+    QString destination = resValuesDirectory.absoluteFilePath(cutterFileName);
+    return writeStringXMLToFile(destination);
+}
+
+bool writeStringXMLToFile(const QString &destination) {
+    QFile file(destination);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+    {
+        fprintf(stderr, "Creating Cutter string resource file %s failed.\n", qPrintable(destination));
+        return false;
+    }
+
+    QTextStream stream(&file);
+    stream << "<?xml version='1.0' encoding='UTF-8'?>\n";
+    stream << "<resources>\n";
+//    stream << "    <string name=\"CUTTER_MESSAGE\">Hello Qt\\'er Android world!</string>\n";
+    stream << "    <string name=\"CUTTER_MESSAGE\">Hello Qter Android world!</string>\n";
+    stream << "</resources>\n";
+
+    file.close();
+
+    return true;
+}
+
+bool createCutterSource(const Options &options)
+{
+    QString assetsDir = "%1/assets"_L1.arg(options.outputDirectory);
+
+    QDir assetDirectory = QDir(assetsDir);
+    if (!assetDirectory.exists()) {
+        fprintf(stderr, "Cannot find android output dir in %s", qPrintable(options.outputDirectory));
+        return false;
+    }
+    QString cutterFileName=QStringLiteral("cutter.txt");
+    QString destination = assetDirectory.absoluteFilePath(cutterFileName);
+    QFile file(destination);
+
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+        QTextStream outputStream(&file);
+        outputStream << "Hello cuter deployed Android world!\n";
+        if (options.verbose)
+            fprintf(stdout, "Cutter file created.\n");
+        return true;
+    }
+
+    fprintf(stderr, "Cannot create cutter file %s", qPrintable(file.fileName()));
+    return false;
 }
 
 bool copyAndroidExtraLibs(Options *options)
@@ -3289,6 +3357,15 @@ int main(int argc, char *argv[])
         options.setCurrentQtArchitecture(it.key(),
                                          it.value().qtInstallDirectory,
                                          it.value().qtDirectories);
+
+        if (options.cutter) {
+            bool cutterOptionFailed = false;
+            cutterOptionFailed &= createCutterSource(options);
+            cutterOptionFailed &= createCutterStringValue(options);
+            if (cutterOptionFailed) {
+                return CannotCopyQtFiles;
+            }
+        }
 
         // All architectures have a copy of the gradle files but only one set needs to be copied.
         if (!androidTemplatetCopied && options.build && !options.auxMode && !options.copyDependenciesOnly) {
