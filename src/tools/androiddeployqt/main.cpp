@@ -3349,6 +3349,18 @@ int main(int argc, char *argv[])
                 : "No"
             );
 
+    if (options.cutter) {
+        bool cutterOptionFailed = false;
+        cutterOptionFailed &= createCutterSource(options);
+        cutterOptionFailed &= createCutterStringValue(options);
+        if (cutterOptionFailed) {
+            fprintf(stderr, "--cutter option failed\n");
+            return CannotCopyQtFiles;
+        }
+        if (Q_UNLIKELY(options.timing))
+            fprintf(stdout, "[TIMING] %lld ns: Cutter option\n", options.timer.nsecsElapsed());
+    }
+
     bool androidTemplatetCopied = false;
 
     for (auto it = options.architectures.constBegin(); it != options.architectures.constEnd(); ++it) {
@@ -3357,15 +3369,6 @@ int main(int argc, char *argv[])
         options.setCurrentQtArchitecture(it.key(),
                                          it.value().qtInstallDirectory,
                                          it.value().qtDirectories);
-
-        if (options.cutter) {
-            bool cutterOptionFailed = false;
-            cutterOptionFailed &= createCutterSource(options);
-            cutterOptionFailed &= createCutterStringValue(options);
-            if (cutterOptionFailed) {
-                return CannotCopyQtFiles;
-            }
-        }
 
         // All architectures have a copy of the gradle files but only one set needs to be copied.
         if (!androidTemplatetCopied && options.build && !options.auxMode && !options.copyDependenciesOnly) {
