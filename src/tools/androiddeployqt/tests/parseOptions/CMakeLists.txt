@@ -5,6 +5,8 @@
 ## tst_parseOptions Test:
 #####################################################################
 
+include_directories(../../)
+
 qt_internal_add_test(tst_parseOptions
         SOURCES
         tst_parseOptions.cpp

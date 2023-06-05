@@ -5,6 +5,8 @@
 #include <qmath.h>
 #include <qfloat16.h>
 
+#include <options.h>
+
 class tst_ParseOptions : public QObject
 {
 Q_OBJECT
