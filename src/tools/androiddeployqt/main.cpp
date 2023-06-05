@@ -2770,13 +2770,14 @@ int main(int argc, char *argv[])
         return SyntaxErrorOrHelpRequested;
     }
 
-    options.timer.start();
+    QElapsedTimer timer;
+    timer.start();
 
     if (!readInputFile(&options))
         return CannotReadInputFile;
 
     if (Q_UNLIKELY(options.timing))
-        fprintf(stdout, "[TIMING] %lld ns: Read input file\n", options.timer.nsecsElapsed());
+        fprintf(stdout, "[TIMING] %lld ns: Read input file\n", timer.nsecsElapsed());
 
     fprintf(stdout,
             "Generating Android Package\n"
@@ -2807,13 +2808,13 @@ int main(int argc, char *argv[])
         if (!androidTemplatetCopied && options.build && !options.auxMode && !options.copyDependenciesOnly) {
             cleanAndroidFiles(options);
             if (Q_UNLIKELY(options.timing))
-                fprintf(stdout, "[TIMING] %lld ns: Cleaned Android file\n", options.timer.nsecsElapsed());
+                fprintf(stdout, "[TIMING] %lld ns: Cleaned Android file\n", timer.nsecsElapsed());
 
             if (!copyAndroidTemplate(options))
                 return CannotCopyAndroidTemplate;
 
             if (Q_UNLIKELY(options.timing))
-                fprintf(stdout, "[TIMING] %lld ns: Copied Android template\n", options.timer.nsecsElapsed());
+                fprintf(stdout, "[TIMING] %lld ns: Copied Android template\n", timer.nsecsElapsed());
             androidTemplatetCopied = true;
         }
 
@@ -2821,32 +2822,32 @@ int main(int argc, char *argv[])
             return CannotReadDependencies;
 
         if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ns: Read dependencies\n", options.timer.nsecsElapsed());
+            fprintf(stdout, "[TIMING] %lld ns: Read dependencies\n", timer.nsecsElapsed());
 
         if (!copyQtFiles(&options))
             return CannotCopyQtFiles;
 
         if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ns: Copied Qt files\n", options.timer.nsecsElapsed());
+            fprintf(stdout, "[TIMING] %lld ns: Copied Qt files\n", timer.nsecsElapsed());
 
         if (!copyAndroidExtraLibs(&options))
             return CannotCopyAndroidExtraLibs;
 
         if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ms: Copied extra libs\n", options.timer.nsecsElapsed());
+            fprintf(stdout, "[TIMING] %lld ms: Copied extra libs\n", timer.nsecsElapsed());
 
         if (!copyAndroidExtraResources(&options))
             return CannotCopyAndroidExtraResources;
 
         if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ns: Copied extra resources\n", options.timer.nsecsElapsed());
+            fprintf(stdout, "[TIMING] %lld ns: Copied extra resources\n", timer.nsecsElapsed());
 
         if (!options.auxMode) {
             if (!copyStdCpp(&options))
                 return CannotCopyGnuStl;
 
             if (Q_UNLIKELY(options.timing))
-                fprintf(stdout, "[TIMING] %lld ns: Copied GNU STL\n", options.timer.nsecsElapsed());
+                fprintf(stdout, "[TIMING] %lld ns: Copied GNU STL\n", timer.nsecsElapsed());
         }
         // If Unbundled deployment is used, remove app lib as we don't want it packaged inside the APK
         if (options.deploymentMechanism == Options::Unbundled) {
@@ -2860,10 +2861,10 @@ int main(int argc, char *argv[])
         }
 
         if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ns: Checked for application binary\n", options.timer.nsecsElapsed());
+            fprintf(stdout, "[TIMING] %lld ns: Checked for application binary\n", timer.nsecsElapsed());
 
         if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ns: Bundled Qt libs\n", options.timer.nsecsElapsed());
+            fprintf(stdout, "[TIMING] %lld ns: Bundled Qt libs\n", timer.nsecsElapsed());
     }
 
     if (options.copyDependenciesOnly) {
@@ -2886,22 +2887,22 @@ int main(int argc, char *argv[])
             return CannotCopyAndroidSources;
 
         if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ns: Copied android sources\n", options.timer.nsecsElapsed());
+            fprintf(stdout, "[TIMING] %lld ns: Copied android sources\n", timer.nsecsElapsed());
 
         if (!updateAndroidFiles(options))
             return CannotUpdateAndroidFiles;
 
         if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ns: Updated files\n", options.timer.nsecsElapsed());
+            fprintf(stdout, "[TIMING] %lld ns: Updated files\n", timer.nsecsElapsed());
 
         if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ns: Created project\n", options.timer.nsecsElapsed());
+            fprintf(stdout, "[TIMING] %lld ns: Created project\n", timer.nsecsElapsed());
 
         if (!buildAndroidProject(options))
             return CannotBuildAndroidProject;
 
         if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ns: Built project\n", options.timer.nsecsElapsed());
+            fprintf(stdout, "[TIMING] %lld ns: Built project\n", timer.nsecsElapsed());
 
         if (!options.keyStore.isEmpty() && !signPackage(options))
             return CannotSignPackage;
@@ -2910,19 +2911,19 @@ int main(int argc, char *argv[])
             return CannotCopyApk;
 
         if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ns: Signed package\n", options.timer.nsecsElapsed());
+            fprintf(stdout, "[TIMING] %lld ns: Signed package\n", timer.nsecsElapsed());
     }
 
     if (options.installApk && !installApk(options))
         return CannotInstallApk;
 
     if (Q_UNLIKELY(options.timing))
-        fprintf(stdout, "[TIMING] %lld ns: Installed APK\n", options.timer.nsecsElapsed());
+        fprintf(stdout, "[TIMING] %lld ns: Installed APK\n", timer.nsecsElapsed());
 
     if (!options.depFilePath.isEmpty())
         writeDependencyFile(options);
 
-    fprintf(stdout, "Android package built successfully in %.3f ms.\n", options.timer.elapsed() / 1000.);
+    fprintf(stdout, "Android package built successfully in %.3f ms.\n", timer.elapsed() / 1000.);
 
     if (options.installApk)
         fprintf(stdout, "  -- It can now be run from the selected device/emulator.\n");
