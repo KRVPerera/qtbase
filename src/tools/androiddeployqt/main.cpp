@@ -1367,37 +1367,6 @@ bool copyGradleTemplate(const Options &options)
     return copyFiles(sourceDirectory, QDir(outDir), options);
 }
 
-bool copyAndroidTemplate(const Options &options)
-{
-    if (options.verbose)
-        fprintf(stdout, "Copying Android package template.\n");
-
-    if (!copyGradleTemplate(options))
-        return false;
-
-    if (!copyAndroidTemplate(options, "/src/android/templates"_L1))
-        return false;
-
-    return true;
-}
-
-bool copyAndroidSources(const Options &options)
-{
-    if (options.androidSourceDirectory.isEmpty())
-        return true;
-
-    if (options.verbose)
-        fprintf(stdout, "Copying Android sources from project.\n");
-
-    QDir sourceDirectory(options.androidSourceDirectory);
-    if (!sourceDirectory.exists()) {
-        fprintf(stderr, "Cannot find android sources in %s", qPrintable(options.androidSourceDirectory));
-        return false;
-    }
-
-    return copyFiles(sourceDirectory, QDir(options.outputDirectory), options, true);
-}
-
 bool createCutterStringValue(const Options &options) {
     if (options.verbose)
         fprintf(stdout, "Creating Cutter string resource.\n");
@@ -1462,6 +1431,37 @@ bool createCutterSource(const Options &options)
 
     fprintf(stderr, "Cannot create cutter file %s", qPrintable(file.fileName()));
     return false;
+}
+
+bool copyAndroidTemplate(const Options &options)
+{
+    if (options.verbose)
+        fprintf(stdout, "Copying Android package template.\n");
+
+    if (!copyGradleTemplate(options))
+        return false;
+
+    if (!copyAndroidTemplate(options, "/src/android/templates"_L1))
+        return false;
+
+    return true;
+}
+
+bool copyAndroidSources(const Options &options)
+{
+    if (options.androidSourceDirectory.isEmpty())
+        return true;
+
+    if (options.verbose)
+        fprintf(stdout, "Copying Android sources from project.\n");
+
+    QDir sourceDirectory(options.androidSourceDirectory);
+    if (!sourceDirectory.exists()) {
+        fprintf(stderr, "Cannot find android sources in %s", qPrintable(options.androidSourceDirectory));
+        return false;
+    }
+
+    return copyFiles(sourceDirectory, QDir(options.outputDirectory), options, true);
 }
 
 bool copyAndroidExtraLibs(Options *options)
@@ -3349,18 +3349,6 @@ int main(int argc, char *argv[])
                 : "No"
             );
 
-    if (options.cutter) {
-        bool cutterOptionFailed = false;
-        cutterOptionFailed &= createCutterSource(options);
-        cutterOptionFailed &= createCutterStringValue(options);
-        if (cutterOptionFailed) {
-            fprintf(stderr, "--cutter option failed\n");
-            return CannotCopyQtFiles;
-        }
-        if (Q_UNLIKELY(options.timing))
-            fprintf(stdout, "[TIMING] %lld ns: Cutter option\n", options.timer.nsecsElapsed());
-    }
-
     bool androidTemplatetCopied = false;
 
     for (auto it = options.architectures.constBegin(); it != options.architectures.constEnd(); ++it) {
@@ -3373,6 +3361,19 @@ int main(int argc, char *argv[])
         // All architectures have a copy of the gradle files but only one set needs to be copied.
         if (!androidTemplatetCopied && options.build && !options.auxMode && !options.copyDependenciesOnly) {
             cleanAndroidFiles(options);
+
+            if (options.cutter) {
+                bool cutterOptionFailed = false;
+                cutterOptionFailed &= createCutterSource(options);
+                cutterOptionFailed &= createCutterStringValue(options);
+                if (cutterOptionFailed) {
+                    fprintf(stderr, "--cutter option failed\n");
+                    return CannotCopyQtFiles;
+                }
+                if (Q_UNLIKELY(options.timing))
+                    fprintf(stdout, "[TIMING] %lld ns: Cutter option\n", options.timer.nsecsElapsed());
+            }
+
             if (Q_UNLIKELY(options.timing))
                 fprintf(stdout, "[TIMING] %lld ns: Cleaned Android file\n", options.timer.nsecsElapsed());
 
