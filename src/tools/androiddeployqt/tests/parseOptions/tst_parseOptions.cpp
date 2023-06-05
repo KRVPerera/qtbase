@@ -2,28 +2,28 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
 #include <QTest>
-#include <qmath.h>
-#include <qfloat16.h>
+#include <QString>
+#include <QStringList>
 
 #include <options.h>
+#include <OptionsParser.h>
 
 class tst_ParseOptions : public QObject
 {
 Q_OBJECT
 private slots:
-    void fastSinCos();
+    void testSimpleHelpRequested();
 };
 
-void tst_ParseOptions::fastSinCos()
+void tst_ParseOptions::testSimpleHelpRequested()
 {
-    // Test evenly spaced angles from 0 to 2pi radians.
-    const int LOOP_COUNT = 100000;
-    const qreal loopAngle = 2 * M_PI / (LOOP_COUNT - 1);
-    for (int i = 0; i < LOOP_COUNT; ++i) {
-        qreal angle = i * loopAngle;
-        QVERIFY(qAbs(qSin(angle) - qFastSin(angle)) < 1e-5);
-        QVERIFY(qAbs(qCos(angle) - qFastCos(angle)) < 1e-5);
-    }
+    QStringList programArguments;
+    programArguments << QString("--help"_L1);
+    android::deploy::OptionsParser optionsParser;
+    optionsParser.parseOptions(programArguments);
+    const auto options = optionsParser.getOptions();
+    QVERIFY(optionsParser.isSyntaxErrorOrHelpRequested());
+    QVERIFY(options.helpRequested);
 }
 
 QTEST_APPLESS_MAIN(tst_ParseOptions)

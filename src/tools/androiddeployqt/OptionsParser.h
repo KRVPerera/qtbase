@@ -12,7 +12,7 @@ namespace deploy {
 
 class OptionsParser {
 public:
-    OptionsParser() : options() {}
+    OptionsParser() : options(), m_syntaxError(false) {}
 
     Options getOptions() const {
         return options;
@@ -21,8 +21,13 @@ public:
     bool parseOptions(QStringList arguments);
     void printHelp() const;
 
+    bool isSyntaxErrorOrHelpRequested() const {
+        return m_syntaxError || options.helpRequested || options.outputDirectory.isEmpty();
+    }
+
 private:
     Options options;
+    bool m_syntaxError;
 };
 
 } // namespace deploy

@@ -2764,11 +2764,12 @@ int main(int argc, char *argv[])
 
     android::deploy::OptionsParser optionsParser;
     optionsParser.parseOptions(QCoreApplication::arguments());
-    Options options = optionsParser.getOptions();
-    if (options.helpRequested || options.outputDirectory.isEmpty()) {
+    if (optionsParser.isSyntaxErrorOrHelpRequested()) {
         optionsParser.printHelp();
         return SyntaxErrorOrHelpRequested;
     }
+
+    Options options = optionsParser.getOptions();
 
     QElapsedTimer timer;
     timer.start();

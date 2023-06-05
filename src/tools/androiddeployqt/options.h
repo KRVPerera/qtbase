@@ -6,6 +6,7 @@
 
 #include <QString>
 #include <QStringList>
+#include <QHash>
 
 using namespace Qt::StringLiterals;
 
