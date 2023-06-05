@@ -2762,9 +2762,11 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    Options options = parseOptions(QCoreApplication::arguments());
+    android::deploy::OptionsParser optionsParser;
+    optionsParser.parseOptions(QCoreApplication::arguments());
+    Options options = optionsParser.getOptions();
     if (options.helpRequested || options.outputDirectory.isEmpty()) {
-        printHelp();
+        optionsParser.printHelp();
         return SyntaxErrorOrHelpRequested;
     }
 
