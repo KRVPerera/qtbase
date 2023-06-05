@@ -20,7 +20,13 @@ void tst_ParseOptions::testSimpleHelpRequested()
     QStringList programArguments;
     programArguments << QString("--help"_L1);
     android::deploy::OptionsParser optionsParser;
+    // before parsing
+    const auto preOptions = optionsParser.getOptions();
+    QVERIFY(!preOptions.helpRequested);
+
     optionsParser.parseOptions(programArguments);
+
+    // after parsing
     const auto options = optionsParser.getOptions();
     QVERIFY(optionsParser.isSyntaxErrorOrHelpRequested());
     QVERIFY(options.helpRequested);
