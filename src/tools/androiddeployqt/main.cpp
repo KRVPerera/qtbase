@@ -364,11 +364,10 @@ void deleteMissingFiles(const Options &options, const QDir &srcDir, const QDir &
     fflush(stdout);
 }
 
-Options parseOptions()
+Options parseOptions(QStringList arguments)
 {
     Options options;
 
-    QStringList arguments = QCoreApplication::arguments();
     for (int i=0; i<arguments.size(); ++i) {
         const QString &argument = arguments.at(i);
         if (argument.compare("--output"_L1, Qt::CaseInsensitive) == 0) {
@@ -3248,7 +3247,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    Options options = parseOptions();
+    Options options = parseOptions(QCoreApplication::arguments());
     if (options.helpRequested || options.outputDirectory.isEmpty()) {
         printHelp();
         return SyntaxErrorOrHelpRequested;

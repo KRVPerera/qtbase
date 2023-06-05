@@ -34,3 +34,10 @@ qt_internal_extend_target(${target_name} CONDITION windows
     COMPILE_OPTIONS
         -U__STRICT_ANSI__
 )
+
+if(QT_BUILD_TESTS)
+    add_subdirectory(tests)
+    if(NOT QT_BUILD_TESTS_BY_DEFAULT)
+        set_property(DIRECTORY tests PROPERTY EXCLUDE_FROM_ALL TRUE)
+    endif()
+endif()
