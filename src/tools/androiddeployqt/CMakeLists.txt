@@ -13,6 +13,9 @@ qt_internal_add_tool(${target_name}
     INSTALL_VERSIONED_LINK
     SOURCES
         main.cpp
+        options.h
+        OptionsParser.h
+        OptionsParser.cpp
     DEFINES
         QT_NO_CAST_FROM_ASCII
         QT_NO_CAST_TO_ASCII
@@ -34,3 +37,10 @@ qt_internal_extend_target(${target_name} CONDITION windows
     COMPILE_OPTIONS
         -U__STRICT_ANSI__
 )
+
+if(QT_BUILD_TESTS)
+    add_subdirectory(tests)
+    if(NOT QT_BUILD_TESTS_BY_DEFAULT)
+        set_property(DIRECTORY tests PROPERTY EXCLUDE_FROM_ALL TRUE)
+    endif()
+endif()
